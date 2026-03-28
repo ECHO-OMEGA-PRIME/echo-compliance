@@ -187,7 +187,8 @@ export default {
       if (p === '/health') return json({ status: 'ok', service: 'echo-compliance', version: '1.0.0', timestamp: new Date().toISOString() });
 
       /* ── Auth Required ── */
-      if (!authOk(req, env)) return json({ error: 'unauthorized' }, 401);
+      try {
+    if (!authOk(req, env)) return json({ error: 'unauthorized' }, 401);
       const db = env.DB;
 
       /* ══════════════════════════════════════════════════
@@ -803,7 +804,14 @@ export default {
         });
       }
 
-      return json({ error: 'Not found', path: p }, 404);
+      } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      const stack = err instanceof Error ? err.stack : undefined;
+      slog('error', 'Unhandled request error', { method: m, path: p, error: msg, stack });
+      return json({ error: 'Internal server error', message: msg, path: p }, 500);
+    }
+
+    return json({ error: 'Not found', path: p }, 404);
     } catch (e: any) {
       if (e.message?.includes('JSON')) {
         return json({ error: 'Invalid JSON body' }, 400);
