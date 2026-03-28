@@ -26,10 +26,19 @@ function authOk(req: Request, env: Env): boolean {
   return req.headers.get('X-Echo-API-Key') === env.ECHO_API_KEY;
 }
 
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
 function json(data: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', ...headers },
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', ...SECURITY_HEADERS, ...headers },
   });
 }
 
@@ -154,6 +163,7 @@ export default {
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type,X-Echo-API-Key',
+          ...SECURITY_HEADERS,
         },
       });
     }
@@ -742,6 +752,11 @@ export default {
               'Content-Type': 'text/csv',
               'Content-Disposition': `attachment; filename="compliance-${orgId}.csv"`,
               'Access-Control-Allow-Origin': '*',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'X-XSS-Protection': '1; mode=block',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
           });
         }
